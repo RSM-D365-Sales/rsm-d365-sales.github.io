@@ -185,7 +185,7 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 .search-wrap input:focus{border-color:var(--navy-mid);box-shadow:0 0 0 3px rgba(0,71,179,.12);width:250px}
 
 /* ── GRID ── */
-.grid-section{max-width:1120px;margin:0 auto;padding:36px 24px 90px}
+.grid-section{max-width:1500px;margin:0 auto;padding:36px 24px 90px}
 .grid-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
 .grid-meta-txt{font-size:13px;color:var(--muted)}
 .grid-meta-txt strong{color:var(--text)}
@@ -199,7 +199,11 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 }
 .reset-order:hover{border-color:rgba(0,71,179,.3);color:var(--navy-mid);background:rgba(0,71,179,.05)}
 .rsm-line{width:32px;height:2px;background:var(--navy-mid);border-radius:2px;margin-bottom:8px}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:22px}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:22px}
+@media(max-width:1300px){.cards{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:1040px){.cards{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.cards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.cards{grid-template-columns:1fr}}
 
 /* ── CARD — white, elevated ── */
 .card{
