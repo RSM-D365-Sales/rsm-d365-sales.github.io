@@ -37,7 +37,8 @@ jobs:
             SUBMIT_URL: "${{ secrets.SUBMIT_URL }}",
             OPTIONS_URL: "${{ secrets.OPTIONS_URL }}",
             REQUESTS_URL: "${{ secrets.REQUESTS_URL }}",
-            UPDATE_STATUS_URL: "${{ secrets.UPDATE_STATUS_URL }}"
+            UPDATE_STATUS_URL: "${{ secrets.UPDATE_STATUS_URL }}",
+            ARCHIVE_URL: "${{ secrets.ARCHIVE_URL }}"
           };
           EOF
 

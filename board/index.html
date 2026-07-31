@@ -302,6 +302,40 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
   background-repeat:no-repeat;background-position:right 13px center;padding-right:38px
 }
 .m-move select:focus{border-color:var(--navy-mid);box-shadow:0 0 0 3px rgba(0,71,179,.12)}
+.m-archive{margin-top:18px}
+.m-archive-btn{
+  width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-family:inherit;font-size:12.5px;font-weight:700;letter-spacing:.01em;
+  background:var(--surface);color:var(--muted);
+  border:1px solid var(--border);border-radius:9px;padding:11px 13px;cursor:pointer;transition:all .2s ease
+}
+.m-archive-btn:hover{border-color:rgba(192,57,43,.35);color:var(--danger);background:rgba(192,57,43,.05)}
+.m-archive-btn.restore:hover{border-color:rgba(22,101,52,.35);color:var(--ok);background:rgba(22,101,52,.06)}
+
+/* archive toggle in the control bar */
+.archive-toggle{
+  display:inline-flex;align-items:center;gap:7px;
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:7px 14px;font-size:12px;font-weight:700;color:var(--muted);
+  cursor:pointer;transition:all .2s ease
+}
+.archive-toggle:hover{border-color:rgba(0,71,179,.3);color:var(--navy-mid);background:rgba(0,71,179,.05)}
+.archive-toggle.active{background:var(--navy);border-color:transparent;color:#fff;box-shadow:0 2px 12px var(--navy-glow)}
+.archive-toggle .ac{background:rgba(107,127,163,.16);color:var(--muted);border-radius:100px;min-width:18px;text-align:center;padding:1px 6px;font-size:10.5px;font-weight:800}
+.archive-toggle.active .ac{background:rgba(255,255,255,.22);color:#fff}
+
+/* per-card archive / restore button */
+.rc-archive{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:24px;height:24px;flex-shrink:0;border-radius:6px;cursor:pointer;
+  background:transparent;border:1px solid transparent;color:var(--muted);
+  opacity:0;transition:all .18s ease
+}
+.req-card:hover .rc-archive{opacity:1}
+.rc-archive:hover{border-color:rgba(192,57,43,.3);color:var(--danger);background:rgba(192,57,43,.06)}
+.rc-archive.restore:hover{border-color:rgba(22,101,52,.3);color:var(--ok);background:rgba(22,101,52,.07)}
+.req-card.archived{opacity:.72;background:var(--surface-hover)}
+@media(max-width:760px){ .rc-archive{opacity:1} }
 
 /* ── FOOTER ── */
 .footer{
@@ -377,6 +411,11 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
     </div>
     <div class="ctrl-right">
       <span class="mode-tag" id="mode-tag"></span>
+      <button class="archive-toggle" id="archive-toggle" type="button" aria-pressed="false" title="Show archived requests">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+        <span id="archive-toggle-label">Archived</span>
+        <span class="ac" id="archived-count">0</span>
+      </button>
       <button class="refresh-btn" id="refresh-btn" type="button">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
         Refresh
@@ -426,9 +465,10 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 
    Flow C  REQUESTS_URL       GET  → all Build Requests rows
    Flow D  UPDATE_STATUS_URL  POST → { id, status } updates one row
+   Flow E  ARCHIVE_URL        POST → { id, archived } hides/restores a row
    ════════════════════════════════════════════════════════════════ */
 const CONFIG = Object.assign(
-  { REQUESTS_URL: "", UPDATE_STATUS_URL: "" },
+  { REQUESTS_URL: "", UPDATE_STATUS_URL: "", ARCHIVE_URL: "" },
   window.RSM_CONFIG || {}
 );
 
@@ -462,6 +502,7 @@ const DEMO_REQUESTS = [
   const DEMO = !CONFIG.REQUESTS_URL;
   let requests = [];          // normalized request objects
   let activePrio = 'all';
+  let showArchived = false;   // when true, the board shows archived rows (with a Restore action)
   let dragId = null;
   let diagFound = 0;          // candidate rows seen in the last parse (for diagnostics)
 
@@ -487,7 +528,23 @@ const DEMO_REQUESTS = [
      or SharePoint "Get items" { value:[…] }. Choice columns that arrive
      as { Value:"…" } are unwrapped. Field names matched case-insensitively. */
   function unwrap(v){ return (v && typeof v==='object') ? (v.Value ?? v.value ?? v.DisplayName ?? v) : v; }
-  function pick(o, keys){ for(const k of keys) if(o[k]!=null && o[k]!=='') return o[k]; return ''; }
+  /* Resolve a field by any of several candidate names. Tries exact keys first,
+     then falls back to a case-/separator-insensitive match so SharePoint display
+     names ("Request Title") or encoded internal names ("Request_x0020_Title")
+     still surface. This is why the card title shows regardless of Flow C's casing. */
+  function pick(o, keys){
+    if(!o || typeof o!=='object') return '';
+    for(const k of keys) if(o[k]!=null && o[k]!=='') return o[k];
+    const norm = s => String(s).toLowerCase().replace(/x0020/g,'').replace(/[^a-z0-9]/g,'');
+    const want = keys.map(norm);
+    for(const rk in o){
+      if(o[rk]==null || o[rk]==='') continue;
+      const nk = norm(rk);
+      if(want.includes(nk)) return o[rk];
+    }
+    return '';
+  }
+  function truthy(v){ v = unwrap(v); return v===true || /^(true|1|yes|y)$/i.test(String(v==null?'':v).trim()); }
 
   function normalizeRow(row){
     const id = pick(row, ['id','Id','ID','ItemId']);
@@ -509,6 +566,7 @@ const DEMO_REQUESTS = [
       relatedClient: unwrap(pick(row, ['relatedClient','RelatedClient'])),
       links:         unwrap(pick(row, ['links','Links'])),
       submittedAt:   unwrap(pick(row, ['submittedAt','SubmittedAt','Created'])),
+      archived:      truthy(pick(row, ['archived','Archived','isArchived','IsArchived'])),
       status: STATUSES.includes(status) ? status : 'New'
     };
   }
@@ -590,11 +648,16 @@ const DEMO_REQUESTS = [
     const due = fmtDate(r.neededBy);
     const overdue = isOverdue(r.neededBy, r.status);
     const moveOpts = STATUSES.map(s => `<option value="${esc(s)}"${s===r.status?' selected':''}>${esc(s)}</option>`).join('');
+    const archIcon = r.archived
+      ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><polyline points="3 3 3 8 8 8"/></svg>`
+      : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`;
     return `
-      <div class="req-card" draggable="true" data-id="${esc(r.id)}">
+      <div class="req-card${r.archived?' archived':''}" draggable="true" data-id="${esc(r.id)}">
         <div class="rc-top">
           <span class="prio ${esc(r.priority)}">${esc(r.priority)}</span>
           <span class="rc-ref">${esc(r.referenceId||'')}</span>
+          <button class="rc-archive${r.archived?' restore':''}" data-archive="${esc(r.id)}" type="button"
+            title="${r.archived?'Restore to board':'Archive request'}" aria-label="${r.archived?'Restore request':'Archive request'}">${archIcon}</button>
         </div>
         <div class="rc-title">${esc(r.title)}</div>
         <div class="rc-meta">
@@ -619,11 +682,16 @@ const DEMO_REQUESTS = [
     const q = searchInput.value.toLowerCase().trim();
     const counts = {}; STATUSES.forEach(s => counts[s] = 0);
 
+    const archivedTotal = requests.filter(r => r.archived).length;
+    const acEl = document.getElementById('archived-count');
+    if (acEl) acEl.textContent = archivedTotal;
+
     const visible = requests.filter(r => {
+      const okArchive = showArchived ? r.archived : !r.archived;
       const okPrio = activePrio === 'all' || r.priority === activePrio;
       const okSearch = !q || [r.title,r.referenceId,r.submitterName,r.category,r.module,r.relatedClient,r.description]
         .some(v => (v||'').toLowerCase().includes(q));
-      return okPrio && okSearch;
+      return okArchive && okPrio && okSearch;
     });
 
     // count by status across the full set (so column totals reflect filter)
@@ -636,7 +704,9 @@ const DEMO_REQUESTS = [
       counts[s] = inCol.length;
       body.innerHTML = inCol.length
         ? inCol.map(cardHTML).join('')
-        : `<div class="col-empty">Nothing here${activePrio!=='all'||q?' for this filter':''}.<br>Drop a card to set it to “${esc(s)}”.</div>`;
+        : `<div class="col-empty">${showArchived
+            ? `No archived requests${activePrio!=='all'||q?' for this filter':''} here.`
+            : `Nothing here${activePrio!=='all'||q?' for this filter':''}.<br>Drop a card to set it to “${esc(s)}”.`}</div>`;
     });
 
     STATUSES.forEach(s => board.querySelector(`[data-count="${CSS.escape(s)}"]`).textContent = counts[s]);
@@ -654,7 +724,16 @@ const DEMO_REQUESTS = [
       card.addEventListener('dragend', () => { card.classList.remove('dragging'); dragId = null; });
       card.addEventListener('click', e => {
         if (e.target.closest('.rc-move')) return;   // don't open modal when using the select
+        if (e.target.closest('.rc-archive')) return; // archive button handles itself
         openModal(card.dataset.id);
+      });
+    });
+    board.querySelectorAll('button[data-archive]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = btn.dataset.archive;
+        const r = requests.find(x => String(x.id) === String(id));
+        archiveRequest(id, !(r && r.archived));
       });
     });
     board.querySelectorAll('select[data-move]').forEach(sel => {
@@ -697,6 +776,40 @@ const DEMO_REQUESTS = [
       toast('Couldn’t save — change reverted', 'err');
     } finally {
       board.querySelector(`.req-card[data-id="${CSS.escape(String(id))}"]`)?.classList.remove('saving');
+    }
+  }
+
+  /* ── Archive / restore → POST to Flow E, revert on failure ── */
+  async function archiveRequest(id, archived){
+    const r = requests.find(x => String(x.id) === String(id));
+    if (!r || r.archived === archived) return;
+    if (String(id).startsWith('_noid_')) {
+      toast('This row has no SharePoint ID — add ID to Flow C to enable archiving', 'err');
+      return;
+    }
+    const prev = r.archived;
+    r.archived = archived;
+    render();
+    // keep the modal in sync: close it if the card just left the current view
+    if (modal.dataset.openId === String(id)) {
+      (archived && !showArchived) || (!archived && showArchived) ? closeModal() : openModal(id);
+    }
+    try {
+      if (DEMO || !CONFIG.ARCHIVE_URL) {
+        await new Promise(res => setTimeout(res, 350));         // simulate latency
+      } else {
+        const res = await fetch(CONFIG.ARCHIVE_URL, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ id: r.id, archived, referenceId: r.referenceId })
+        });
+        if (!res.ok) throw new Error('HTTP '+res.status);
+      }
+      toast(`${r.referenceId||'Request'} ${archived ? 'archived' : 'restored'}`, 'ok');
+    } catch (err) {
+      r.archived = prev;                                         // revert
+      render();
+      toast('Couldn’t save — change reverted', 'err');
     }
   }
 
@@ -743,10 +856,18 @@ const DEMO_REQUESTS = [
           <label for="m-status">Status</label>
           <select id="m-status">${STATUSES.map(s=>`<option value="${esc(s)}"${s===r.status?' selected':''}>${esc(s)}</option>`).join('')}</select>
         </div>
+        <div class="m-archive">
+          <button id="m-archive-btn" class="m-archive-btn${r.archived?' restore':''}" type="button">
+            ${r.archived
+              ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><polyline points="3 3 3 8 8 8"/></svg> Restore to board`
+              : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><line x1="10" y1="12" x2="14" y2="12"/></svg> Archive request`}
+          </button>
+        </div>
       </div>`;
     overlay.classList.add('show');
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('m-status').addEventListener('change', e => changeStatus(id, e.target.value));
+    document.getElementById('m-archive-btn').addEventListener('click', () => archiveRequest(id, !r.archived));
   }
   function closeModal(){ overlay.classList.remove('show'); modal.dataset.openId = ''; }
   overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
@@ -807,6 +928,15 @@ const DEMO_REQUESTS = [
   refreshBtn.addEventListener('click', () => {
     refreshBtn.classList.add('spinning');
     load().finally(() => setTimeout(() => refreshBtn.classList.remove('spinning'), 600));
+  });
+  const archiveToggle = document.getElementById('archive-toggle');
+  archiveToggle.addEventListener('click', () => {
+    showArchived = !showArchived;
+    archiveToggle.classList.toggle('active', showArchived);
+    archiveToggle.setAttribute('aria-pressed', String(showArchived));
+    document.getElementById('archive-toggle-label').textContent = showArchived ? 'Active board' : 'Archived';
+    archiveToggle.title = showArchived ? 'Back to the active board' : 'Show archived requests';
+    render();
   });
 
   /* ── Init ── */

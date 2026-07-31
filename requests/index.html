@@ -380,7 +380,18 @@ const DEMO_REQUESTS = [
   function fmtDate(d,opts){ if(!d) return ''; const dt=new Date(d); if(isNaN(dt)) return ''; return dt.toLocaleDateString(undefined,opts||{month:'short',day:'numeric',year:'numeric'}); }
   function isOverdue(d,status){ if(!d||status==='Done'||status==='Declined') return false; const dt=new Date(d); if(isNaN(dt)) return false; return dt < new Date(new Date().toDateString()); }
   function unwrap(v){ return (v && typeof v==='object') ? (v.Value ?? v.value ?? v.DisplayName ?? v) : v; }
-  function pick(o, keys){ for(const k of keys) if(o[k]!=null && o[k]!=='') return o[k]; return ''; }
+  function pick(o, keys){
+    if(!o || typeof o!=='object') return '';
+    for(const k of keys) if(o[k]!=null && o[k]!=='') return o[k];
+    const norm = s => String(s).toLowerCase().replace(/x0020/g,'').replace(/[^a-z0-9]/g,'');
+    const want = keys.map(norm);
+    for(const rk in o){
+      if(o[rk]==null || o[rk]==='') continue;
+      if(want.includes(norm(rk))) return o[rk];
+    }
+    return '';
+  }
+  function truthy(v){ v = unwrap(v); return v===true || /^(true|1|yes|y)$/i.test(String(v==null?'':v).trim()); }
 
   function normalizeRow(row){
     const status = unwrap(pick(row, ['status','Status'])) || 'New';
@@ -401,6 +412,7 @@ const DEMO_REQUESTS = [
       relatedClient: unwrap(pick(row, ['relatedClient','RelatedClient'])),
       links:         unwrap(pick(row, ['links','Links'])),
       submittedAt:   unwrap(pick(row, ['submittedAt','SubmittedAt','Created'])),
+      archived:      truthy(pick(row, ['archived','Archived','isArchived','IsArchived'])),
       status: STATUSES.includes(status) ? status : 'New'
     };
   }
@@ -477,8 +489,9 @@ const DEMO_REQUESTS = [
   function render(){
     const q = searchInput.value.toLowerCase().trim();
 
-    // pill counts (respect search, ignore status filter)
-    const bySearch = requests.filter(r => !q || [r.title,r.referenceId,r.submitterName,r.category,r.module,r.relatedClient,r.description,r.team].some(v => (v||'').toLowerCase().includes(q)));
+    // pill counts (respect search, ignore status filter). Archived rows are
+    // hidden here — they're managed (and restorable) on the board at /board/.
+    const bySearch = requests.filter(r => !r.archived && (!q || [r.title,r.referenceId,r.submitterName,r.category,r.module,r.relatedClient,r.description,r.team].some(v => (v||'').toLowerCase().includes(q))));
     statusPills.querySelector('[data-pc="all"]').textContent = bySearch.length;
     STATUSES.forEach(s => { const el = statusPills.querySelector(`[data-pc="${CSS.escape(s)}"]`); if (el) el.textContent = bySearch.filter(r => r.status === s).length; });
 
