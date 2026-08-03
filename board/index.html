@@ -531,28 +531,55 @@ const DEMO_REQUESTS = [
   /* Resolve a field by any of several candidate names. Tries exact keys first,
      then falls back to a case-/separator-insensitive match so SharePoint display
      names ("Request Title") or encoded internal names ("Request_x0020_Title")
-     still surface. This is why the card title shows regardless of Flow C's casing. */
+     still surface. This is why the card title shows regardless of Flow C's casing.
+     The fallback walks the CANDIDATES in order (not the payload keys), so an
+     earlier candidate always beats a later one no matter how the row is ordered. */
+  const normKey = s => String(s).toLowerCase().replace(/x0020/g,'').replace(/[^a-z0-9]/g,'');
   function pick(o, keys){
     if(!o || typeof o!=='object') return '';
     for(const k of keys) if(o[k]!=null && o[k]!=='') return o[k];
-    const norm = s => String(s).toLowerCase().replace(/x0020/g,'').replace(/[^a-z0-9]/g,'');
-    const want = keys.map(norm);
+    const byNorm = {};
     for(const rk in o){
       if(o[rk]==null || o[rk]==='') continue;
-      const nk = norm(rk);
-      if(want.includes(nk)) return o[rk];
+      const nk = normKey(rk);
+      if(!(nk in byNorm)) byNorm[nk] = o[rk];
     }
+    for(const k of keys){ const v = byNorm[normKey(k)]; if(v!=null && v!=='') return v; }
     return '';
+  }
+
+  /* Request title needs its own resolver. SharePoint's built-in `Title` column holds
+     the REQ reference id (SETUP.md renames it to ReferenceId), so any loose match on
+     "title" resolves to REQ-xxxx and the card shows the id instead of the request name.
+     Order: a dedicated request-title column → a literal lowercase `title` (the key
+     Flow C's Select maps) → the reference id as a last resort. */
+  function pickTitle(row, refId){
+    for(const k of ['RequestTitle','requestTitle','Request Title','Request_x0020_Title','title']){
+      const v = unwrap(row[k]); if(v!=null && v!=='') return v;
+    }
+    // "Request title", "Request_x0020_title", "RequestTitle0" (SharePoint name collisions)
+    for(const rk in row){
+      if(!/^requesttitle\d*$/.test(normKey(rk))) continue;
+      const v = unwrap(row[rk]); if(v!=null && v!=='') return v;
+    }
+    // A lone "title"-ish key, but never echo the reference id back as the title
+    for(const rk in row){
+      if(normKey(rk) !== 'title') continue;
+      const v = unwrap(row[rk]);
+      if(v!=null && v!=='' && String(v) !== String(refId)) return v;
+    }
+    return refId || 'Untitled request';
   }
   function truthy(v){ v = unwrap(v); return v===true || /^(true|1|yes|y)$/i.test(String(v==null?'':v).trim()); }
 
   function normalizeRow(row){
     const id = pick(row, ['id','Id','ID','ItemId']);
     const status = unwrap(pick(row, ['status','Status'])) || 'New';
+    const referenceId = unwrap(pick(row, ['referenceId','ReferenceId','Title','reference']));
     return {
       id,
-      referenceId:   unwrap(pick(row, ['referenceId','ReferenceId','Title','reference'])),
-      title:         unwrap(pick(row, ['title','RequestTitle','requestTitle','Title_x0020'])) || unwrap(pick(row,['referenceId','ReferenceId'])) || 'Untitled request',
+      referenceId,
+      title:         pickTitle(row, referenceId),
       submitterName: unwrap(pick(row, ['submitterName','SubmitterName'])),
       submitterEmail:unwrap(pick(row, ['submitterEmail','SubmitterEmail'])),
       team:          unwrap(pick(row, ['team','Team'])),
