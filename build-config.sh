@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
 # ────────────────────────────────────────────────────────────────
-# Cloudflare Pages build command:  bash build-config.sh
+# Cloudflare build command:  bash build-config.sh
 #
 # Writes the runtime config.js (git-ignored) from the project's
 # environment variables so the flow URLs never live in git.
-# Define the five variables as encrypted env vars under
-# Pages project → Settings → Environment variables (Production).
+# Define the five variables as secrets under the Worker's
+# Settings → Build → Variables and secrets (build-time scope).
 # Shape is documented in config.example.js.
 # ────────────────────────────────────────────────────────────────
 set -euo pipefail
 
-# Guard: only run on Cloudflare's build machines (CF_PAGES=1 is set there).
-# Running this locally would overwrite the developer's real config.js.
-if [ "${CF_PAGES:-}" != "1" ]; then
-  echo "Refusing to run outside Cloudflare Pages (would overwrite local config.js)." >&2
+# Guard: only run on Cloudflare's build machines (Workers Builds sets
+# WORKERS_CI=1; Pages sets CF_PAGES=1). Running this locally would
+# overwrite the developer's real config.js.
+if [ "${WORKERS_CI:-}" != "1" ] && [ "${CF_PAGES:-}" != "1" ]; then
+  echo "Refusing to run outside Cloudflare builds (would overwrite local config.js)." >&2
   exit 1
 fi
 
