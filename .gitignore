@@ -5,6 +5,7 @@
 request/SETUP.md
 request/provision-lists.ps1
 request/request-options.csv
+CLOUDFLARE-MIGRATION.md
 
 # Runtime secret (flow URLs). Written at build by build-config.sh from
 # Cloudflare Pages build secrets (Settings → Environment variables).
