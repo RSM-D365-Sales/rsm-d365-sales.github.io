@@ -1,12 +1,13 @@
 # ── Internal ops files — never publish ──
-# The Pages deploy workflow uploads the entire repo root (path: .), so anything
-# committed under request/ is downloadable at www.rsmd365.com/...  Keep setup
+# Cloudflare Pages deploys the entire repo root, so anything committed
+# under request/ is downloadable at www.rsmd365.com/...  Keep setup
 # scripts and internal docs local only (OneDrive still backs them up).
 request/SETUP.md
 request/provision-lists.ps1
 request/request-options.csv
 
-# Runtime secret (flow URLs). Injected at deploy from GitHub Secrets.
+# Runtime secret (flow URLs). Written at build by build-config.sh from
+# Cloudflare Pages build secrets (Settings → Environment variables).
 # The .example template stays tracked so the shape is documented.
 # Centralized at repo root, shared by /request/ and /board/.
 config.js

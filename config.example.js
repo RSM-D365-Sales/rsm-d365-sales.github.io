@@ -1,7 +1,8 @@
 /* ────────────────────────────────────────────────────────────────
    TEMPLATE — copy to  config.js  (repo root) and paste in your URLs.
-   config.js is git-ignored; in production the GitHub Pages deploy
-   workflow writes it from repo Secrets. Shared by /request/ and /board/.
+   config.js is git-ignored; in production the Cloudflare Pages build
+   (build-config.sh) writes it from the project's build secrets.
+   Shared by /request/ and /board/.
    ──────────────────────────────────────────────────────────────── */
 window.RSM_CONFIG = {
   SUBMIT_URL: "",         // Flow A — POST, receive a submitted request
