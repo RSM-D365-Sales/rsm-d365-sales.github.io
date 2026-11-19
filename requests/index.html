@@ -11,18 +11,27 @@
 /* ── Reset ── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --navy:#002D6C;
-  --navy-mid:#0047B3;
-  --navy-light:#2563EB;
-  --navy-glow:rgba(0,71,179,.22);
-  --bg:#eef2f9;
-  --surface:#ffffff;
-  --surface-hover:#f4f7fd;
-  --border:#dde4f0;
-  --text:#1a2744;
-  --muted:#6b7fa3;
-  --danger:#c0392b;
-  --ok:#166534;
+  /* RSM deck palette (matches cross-entity-planning/ and the architecture slides) */
+  --navy:#ffffff;          /* titles (was dark navy on white) */
+  --navy-mid:#4ade80;      /* primary accent: green */
+  --navy-light:#3b82f6;
+  --navy-glow:rgba(74,222,128,.18);
+  --bg:#0b1120;            /* slide background */
+  --surface:#111a2e;       /* panels / cards */
+  --surface-hover:#17223a;
+  --border:#24304d;
+  --text:#e6ebf5;
+  --muted:#8d99b3;
+  --body:#b9c3d8;
+  --green:#4ade80;
+  --blue:#3b6cf6;
+  --blue-hi:#38a3f5;       /* headline highlight */
+  --panel-blue:#3b82f6;
+  --field:#0b1120;
+  --danger:#f87171;
+  --ok:#4ade80;
+  --rsm-gray:#9aa3b2;
+  color-scheme:dark;
 }
 html{scroll-behavior:smooth}
 body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
@@ -70,7 +79,7 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 .hero-bg{
   position:absolute;inset:0;
   background:
-    radial-gradient(ellipse 80% 120% at 35% -10%,rgba(0,71,179,.6) 0%,transparent 60%),
+    radial-gradient(ellipse 80% 120% at 35% -10%,rgba(74,222,128,.6) 0%,transparent 60%),
     radial-gradient(ellipse 50% 80% at 90% 110%,rgba(37,99,235,.25) 0%,transparent 55%),
     linear-gradient(160deg,#001a45 0%,#003080 60%,#001535 100%)
 }
@@ -108,7 +117,7 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
   border:1px solid var(--border);background:var(--surface);color:var(--muted);
   cursor:pointer;transition:all .2s ease;user-select:none
 }
-.pill:hover{border-color:rgba(0,71,179,.35);color:var(--navy-mid);background:rgba(0,71,179,.06)}
+.pill:hover{border-color:rgba(74,222,128,.35);color:var(--navy-mid);background:rgba(74,222,128,.06)}
 .pill.active{background:var(--navy-mid);border-color:transparent;color:#fff;box-shadow:0 2px 12px var(--navy-glow)}
 .pill-count{background:rgba(0,0,0,.1);border-radius:100px;padding:1px 7px;font-size:10px;font-weight:700}
 .pill.active .pill-count{background:rgba(255,255,255,.25)}
@@ -120,7 +129,7 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
   padding:7px 12px 7px 34px;outline:none;width:200px;transition:all .25s
 }
 .search-wrap input::placeholder{color:var(--muted)}
-.search-wrap input:focus{border-color:var(--navy-mid);box-shadow:0 0 0 3px rgba(0,71,179,.12);width:240px}
+.search-wrap input:focus{border-color:var(--navy-mid);box-shadow:0 0 0 3px rgba(74,222,128,.12);width:240px}
 .ctrl-right{margin-left:auto;display:flex;align-items:center;gap:12px}
 .refresh-btn{
   display:inline-flex;align-items:center;gap:7px;
@@ -128,7 +137,7 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
   padding:7px 14px;font-size:12px;font-weight:700;color:var(--navy-mid);
   cursor:pointer;transition:all .2s ease
 }
-.refresh-btn:hover{border-color:rgba(0,71,179,.3);background:rgba(0,71,179,.05)}
+.refresh-btn:hover{border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.05)}
 .refresh-btn svg{transition:transform .5s ease}
 .refresh-btn.spinning svg{transform:rotate(360deg)}
 .mode-tag{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:100px;white-space:nowrap}
@@ -140,7 +149,7 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 .meta-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px}
 .meta-txt{font-size:13px;color:var(--muted)}
 .meta-txt strong{color:var(--text)}
-.table-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 2px 10px rgba(26,39,68,.06);overflow:hidden}
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);overflow:hidden}
 .table-scroll{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:13px;min-width:880px}
 thead th{
@@ -215,6 +224,125 @@ td{padding:12px 14px;vertical-align:middle;color:var(--text)}
 /* ── FOOTER ── */
 .footer{border-top:1px solid var(--border);padding:24px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:12px;color:var(--muted);background:var(--surface)}
 .footer-logo{background:var(--navy);width:22px;height:22px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#fff;letter-spacing:-0.5px}
+
+/* ════ RSM deck theme ════ */
+body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh}
+/* keep the deck footer on the bottom edge of short pages */
+body>:not(.nav):not(.toast):not(.modal-overlay){flex-shrink:0;width:100%}
+.deck-foot{margin-top:auto}
+:focus-visible{outline:2px solid var(--green);outline-offset:3px;border-radius:6px}
+::selection{background:rgba(74,222,128,.3)}
+
+/* nav: flat slide background, RSM bars mark */
+.nav{background:rgba(11,17,32,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid #1f2a44}
+.rsm-mark{display:grid;justify-items:start;gap:3px;line-height:1}
+.rsm-bars{display:flex;gap:3px;align-items:center}
+.rsm-bars i{display:block;height:6px;border-radius:1px}
+.rsm-bars i:nth-child(1){width:6px;background:var(--rsm-gray)}
+.rsm-bars i:nth-child(2){width:14px;background:#3f9c35}
+.rsm-bars i:nth-child(3){width:44px;background:#009cde}
+.rsm-mark b{font-size:20px;font-weight:900;letter-spacing:-.02em;color:#fff}
+.rsm-wordmark-text{padding-left:4px}
+.rsm-wordmark-text .sub{color:var(--muted)}
+.nav-divider{background:#24304d}
+.nav-title{color:var(--green);font-weight:800;letter-spacing:.24em}
+.nav-back{background:transparent;border:1px solid #2a3654;border-radius:6px;color:var(--body)}
+.nav-back:hover{background:var(--surface-hover);border-color:var(--green);color:var(--green)}
+
+/* hero: flat, slide-title style */
+.hero-bg,.hero-grid,.orb{display:none}
+.hero-eyebrow{color:var(--green);font-size:13px;font-weight:800;letter-spacing:.32em;margin-bottom:16px}
+.hero-eyebrow::before{display:none}
+.hero h1{letter-spacing:-.02em;color:#fff}
+.hero h1 .accent{color:var(--blue-hi)}
+.hero-sub{color:var(--body)}
+
+/* sticky control bars */
+.filter-bar,.controls{background:rgba(11,17,32,.92);border-bottom:1px solid #1f2a44}
+.filter-lbl{color:var(--muted);font-weight:800;letter-spacing:.2em}
+
+/* pills -> step tabs: dark boxes, active = green outline */
+.pill{border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--body)}
+.pill:hover{border-color:rgba(74,222,128,.5);color:#fff;background:var(--surface-hover)}
+.pill.active{background:rgba(74,222,128,.08);border:1px solid var(--green);color:#fff;box-shadow:none}
+.pill-count{background:rgba(255,255,255,.08);color:var(--muted)}
+.pill.active .pill-count{background:var(--green);color:#0b1120}
+
+.search-wrap input{background:var(--field);border-color:var(--border);border-radius:6px}
+.search-wrap input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(74,222,128,.14)}
+
+/* priority / status badges: outline chips like the OVERVIEW pill */
+.prio.Low{background:transparent;color:#94a3b8;border:1px solid rgba(148,163,184,.45)}
+.prio.Medium{background:transparent;color:#60a5fa;border:1px solid rgba(96,165,250,.5)}
+.prio.High{background:transparent;color:#fb923c;border:1px solid rgba(251,146,60,.5)}
+.prio.Critical{background:rgba(248,113,113,.08);color:#f87171;border:1px solid rgba(248,113,113,.55)}
+.mode-tag.demo{background:transparent;color:#fb923c;border:1px solid rgba(251,146,60,.5)}
+.mode-tag.live{background:transparent;color:var(--green);border:1px solid rgba(74,222,128,.55)}
+
+.refresh-btn,.archive-toggle{background:var(--surface);border-color:var(--border);border-radius:6px}
+.refresh-btn{color:var(--green)}
+.refresh-btn:hover,.archive-toggle:hover{border-color:var(--green);background:var(--surface-hover);color:var(--green)}
+.archive-toggle.active{background:rgba(74,222,128,.08);border:1px solid var(--green);color:#fff;box-shadow:none}
+.archive-toggle .ac{background:rgba(255,255,255,.08)}
+.archive-toggle.active .ac{background:var(--green);color:#0b1120}
+
+/* modals */
+.modal-overlay{background:rgba(3,7,16,.72)}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 24px 70px rgba(0,0,0,.6)}
+.modal-close{background:transparent;border-color:var(--border)}
+.m-move select,.field input[type=text],.field input[type=email],.field input[type=date],.field input[type=url],.field select,.field textarea{background-color:var(--field)}
+
+/* toast */
+.toast{background:#17223a;border:1px solid var(--border);color:#fff}
+.toast.err{background:#3b1219;border-color:rgba(248,113,113,.5)}
+.toast.ok{background:#0f2a1c;border-color:rgba(74,222,128,.5)}
+
+/* skeletons */
+.skel-col,.skel-row{background:linear-gradient(90deg,#111a2e 25%,#17223a 50%,#111a2e 75%);background-size:200% 100%}
+
+/* ── deck footer strip ── */
+.deck-foot{border-top:1px solid #1f2a44;background:var(--bg)}
+.deck-foot-inner{max-width:1500px;margin:0 auto;padding:18px clamp(16px,4vw,48px);display:flex;align-items:center;gap:14px 28px;flex-wrap:wrap}
+.foot-title{font-size:clamp(16px,1.3vw,20px);font-weight:700;font-style:italic;color:var(--green)}
+.foot-nav{display:flex;flex-wrap:wrap;align-items:center;gap:4px 0;margin-left:auto;font-size:15px}
+.foot-nav a{color:var(--muted);text-decoration:none;padding:2px 0}
+.foot-nav a:hover{color:#fff}
+.foot-nav a[aria-current]{color:#fff;font-weight:700}
+.foot-nav .dot{color:var(--blue);padding:0 12px}
+.foot-copy{font-size:12px;color:var(--muted)}
+.deck-foot .rsm{display:grid;justify-items:end;gap:4px;line-height:1;text-decoration:none}
+.deck-foot .rsm .rsm-bars{gap:4px}
+.deck-foot .rsm .rsm-bars i{height:9px}
+.deck-foot .rsm .rsm-bars i:nth-child(1){width:9px}
+.deck-foot .rsm .rsm-bars i:nth-child(2){width:20px}
+.deck-foot .rsm .rsm-bars i:nth-child(3){width:66px}
+.deck-foot .rsm b{font-size:28px;font-weight:900;letter-spacing:-.02em;color:#fff}
+.deck-bar{display:grid;grid-template-columns:1fr 2fr 2fr;height:8px}
+.deck-bar i:nth-child(1){background:#e9edf5}.deck-bar i:nth-child(2){background:var(--green)}.deck-bar i:nth-child(3){background:var(--blue)}
+@media(max-width:900px){.foot-nav{display:none}.deck-foot .rsm{margin-left:auto}}
+
+.nav-cta{background:transparent;border:1px solid #2a3654;border-radius:6px;color:var(--body)}
+.nav-cta:hover{background:var(--surface-hover);border-color:var(--green);color:var(--green)}
+.nav-cta.solid{background:transparent;color:var(--green);border-color:var(--green);box-shadow:none}
+.nav-cta.solid:hover{background:rgba(74,222,128,.1)}
+.nav-cta.solid svg{stroke:var(--green)}
+.hero{padding:88px 24px 24px}
+.meta-txt strong{color:var(--green)}
+.table-card{background:var(--surface);border-radius:8px;box-shadow:none}
+thead th{background:#0e1628;letter-spacing:.14em}
+tbody tr:hover{background:var(--surface-hover);box-shadow:inset 3px 0 0 var(--green)}
+.t-title{color:#fff}
+.t-avatar{color:#0b1120}
+.status-badge{background:transparent !important;border:1px solid currentColor}
+.status-badge.New{color:#60a5fa}
+.status-badge.Triaged{color:#a78bfa}
+.status-badge[data-s="In Progress"]{color:#fbbf24}
+.status-badge.Done{color:#4ade80}
+.status-badge.Declined{color:#94a3b8}
+.modal-head .m-ref{color:var(--green)}
+.m-foot .go-board{background:var(--green);color:#0b1120;border-radius:6px;box-shadow:none}
+.m-foot .go-board:hover{background:#86efac}
+.m-foot a:not(.go-board){color:var(--body);border:1px solid #2a3654}
 </style>
 </head>
 <body>
@@ -223,7 +351,7 @@ td{padding:12px 14px;vertical-align:middle;color:var(--text)}
 <nav class="nav">
   <div class="nav-inner">
     <a class="rsm-wordmark" href="/">
-      <div class="rsm-logo-box">RSM</div>
+      <span class="rsm-mark" aria-hidden="true"><span class="rsm-bars"><i></i><i></i><i></i></span><b>RSM</b></span>
       <div class="rsm-wordmark-text">
         <div class="top">RSM US LLP</div>
         <div class="sub">Microsoft Dynamics 365</div>
@@ -250,8 +378,6 @@ td{padding:12px 14px;vertical-align:middle;color:var(--text)}
 
 <!-- ═══ HERO ═══ -->
 <div class="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-grid"></div>
   <div class="hero-inner">
     <div class="hero-eyebrow">Innovation Intake · Log</div>
     <h1>All <span class="accent">Requests</span></h1>
@@ -319,10 +445,15 @@ td{padding:12px 14px;vertical-align:middle;color:var(--text)}
 </div>
 
 <!-- ═══ FOOTER ═══ -->
-<div class="footer">
-  <div class="footer-logo">RSM</div>
-  &copy; 2026 RSM US LLP &nbsp;·&nbsp; Presales Innovation
-</div>
+<footer class="deck-foot">
+  <div class="deck-foot-inner">
+    <span class="foot-title">What has been asked for?</span>
+    <nav class="foot-nav" aria-label="Site"><a href="../">Showcase</a><span class="dot">•</span><a href="../request/">Submit a request</a><span class="dot">•</span><a href="../board/">Request board</a><span class="dot">•</span><a href="../requests/" aria-current="page">All requests</a></nav>
+    <span class="foot-copy">&copy; 2026 RSM US LLP</span>
+    <a class="rsm" href="../" aria-label="RSM — Dynamics 365 showcase"><span class="rsm-bars"><i></i><i></i><i></i></span><b>RSM</b></a>
+  </div>
+  <div class="deck-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+</footer>
 
 <!-- ═══ DETAIL MODAL ═══ -->
 <div class="modal-overlay" id="modal-overlay">
@@ -556,11 +687,11 @@ const DEMO_REQUESTS = [
 
   /* ── Detail modal (read-only) ── */
   const STATUS_BADGE_BG = {
-    "New":"background:rgba(37,99,235,.12);color:#2563EB",
-    "Triaged":"background:rgba(124,58,237,.12);color:#7c3aed",
-    "In Progress":"background:rgba(217,119,6,.14);color:#b45309",
-    "Done":"background:rgba(22,163,74,.13);color:#15803d",
-    "Declined":"background:rgba(148,163,184,.2);color:#64748b"
+    "New":"background:rgba(96,165,250,.1);color:#60a5fa;border:1px solid rgba(96,165,250,.5)",
+    "Triaged":"background:rgba(167,139,250,.1);color:#a78bfa;border:1px solid rgba(167,139,250,.5)",
+    "In Progress":"background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.5)",
+    "Done":"background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.5)",
+    "Declined":"background:rgba(148,163,184,.1);color:#94a3b8;border:1px solid rgba(148,163,184,.45)"
   };
   function openModal(id){
     const r = requests.find(x => String(x.id) === String(id));
